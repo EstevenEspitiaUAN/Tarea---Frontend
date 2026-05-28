@@ -17,9 +17,10 @@ interface Message {
   text: string
 }
 
-const messages: Message[] = [
-  { id: 1, text: 'Hola desde el backend con CORS!' },
+let messages: Message[] = [
+  { id: 1, text: 'Mensaje inicial' },
 ]
+let nextId = 2
 
 app.get('/api/messages', (_req, res) => {
   res.json(messages)
@@ -27,11 +28,44 @@ app.get('/api/messages', (_req, res) => {
 
 app.post('/api/messages', (req, res) => {
   const newMessage: Message = {
-    id: messages.length + 1,
+    id: nextId++,
     text: req.body.text,
   }
   messages.push(newMessage)
   res.status(201).json(newMessage)
+})
+
+app.put('/api/messages/:id', (req, res) => {
+  const id = Number(req.params.id)
+  const index = messages.findIndex((m) => m.id === id)
+  if (index === -1) {
+    res.status(404).json({ error: 'Mensaje no encontrado' })
+    return
+  }
+  messages[index] = { id, text: req.body.text }
+  res.json(messages[index])
+})
+
+app.patch('/api/messages/:id', (req, res) => {
+  const id = Number(req.params.id)
+  const index = messages.findIndex((m) => m.id === id)
+  if (index === -1) {
+    res.status(404).json({ error: 'Mensaje no encontrado' })
+    return
+  }
+  messages[index].text = req.body.text
+  res.json(messages[index])
+})
+
+app.delete('/api/messages/:id', (req, res) => {
+  const id = Number(req.params.id)
+  const index = messages.findIndex((m) => m.id === id)
+  if (index === -1) {
+    res.status(404).json({ error: 'Mensaje no encontrado' })
+    return
+  }
+  messages.splice(index, 1)
+  res.json({ message: `Mensaje ${id} eliminado` })
 })
 
 app.listen(PORT, () => {

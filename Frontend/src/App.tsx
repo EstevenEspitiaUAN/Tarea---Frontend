@@ -1,7 +1,4 @@
 import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 
 interface Message {
@@ -10,163 +7,131 @@ interface Message {
 }
 
 function App() {
-  const [count, setCount] = useState(0)
   const [messages, setMessages] = useState<Message[]>([])
-  const [newText, setNewText] = useState('')
-  const [apiStatus, setApiStatus] = useState('')
+  const [inputText, setInputText] = useState('')
+  const [editId, setEditId] = useState<number | null>(null)
+  const [editText, setEditText] = useState('')
+  const [methodMsg, setMethodMsg] = useState('')
+
+  const API = '/api/messages'
 
   useEffect(() => {
-    fetch('/api/messages')
-      .then((res) => res.json())
+    fetch(API)
+      .then((r) => r.json())
       .then((data) => {
         setMessages(data)
-        setApiStatus('Conectado al backend')
+        setMethodMsg('GET /api/messages - Listar mensajes')
       })
-      .catch(() => setApiStatus('Backend no disponible'))
+      .catch(() => setMethodMsg('Error de conexión con el backend'))
   }, [])
 
-  const sendMessage = () => {
-    if (!newText.trim()) return
-    fetch('/api/messages', {
+  const create = () => {
+    if (!inputText.trim()) return
+    fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: newText }),
+      body: JSON.stringify({ text: inputText }),
     })
-      .then((res) => res.json())
+      .then((r) => r.json())
       .then((msg) => {
         setMessages((prev) => [...prev, msg])
-        setNewText('')
+        setInputText('')
+        setMethodMsg(`POST /api/messages - Crear: "${msg.text}"`)
       })
   }
 
+  const update = (id: number) => {
+    if (!editText.trim()) return
+    fetch(`${API}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: editText }),
+    })
+      .then((r) => r.json())
+      .then((msg) => {
+        setMessages((prev) => prev.map((m) => (m.id === id ? msg : m)))
+        setEditId(null)
+        setEditText('')
+        setMethodMsg(`PUT /api/messages/${id} - Actualizar completamente`)
+      })
+  }
+
+  const patch = (id: number) => {
+    if (!editText.trim()) return
+    fetch(`${API}/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: editText }),
+    })
+      .then((r) => r.json())
+      .then((msg) => {
+        setMessages((prev) => prev.map((m) => (m.id === id ? msg : m)))
+        setEditId(null)
+        setEditText('')
+        setMethodMsg(`PATCH /api/messages/${id} - Actualizar parcialmente`)
+      })
+  }
+
+  const remove = (id: number) => {
+    fetch(`${API}/${id}`, { method: 'DELETE' })
+      .then((r) => r.json())
+      .then(() => {
+        setMessages((prev) => prev.filter((m) => m.id !== id))
+        setMethodMsg(`DELETE /api/messages/${id} - Eliminar mensaje`)
+      })
+  }
+
+  const startEdit = (msg: Message) => {
+    setEditId(msg.id)
+    setEditText(msg.text)
+  }
+
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Vite + React + CORS</h1>
-          <p>
-            Frontend con Vite comunicándose con backend Express
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app">
+      <h1>CRUD con Vite + Express + CORS</h1>
 
-      <div className="ticks"></div>
+      <div className="method-badge">{methodMsg}</div>
 
-      <section id="api-section">
-        <h2>Estado API: {apiStatus}</h2>
-        <ul>
-          {messages.map((msg) => (
-            <li key={msg.id}>{msg.text}</li>
-          ))}
-        </ul>
-        <div className="api-form">
-          <input
-            value={newText}
-            onChange={(e) => setNewText(e.target.value)}
-            placeholder="Escribe un mensaje..."
-          />
-          <button onClick={sendMessage}>Enviar</button>
-        </div>
-      </section>
+      <div className="create-form">
+        <input
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Nuevo mensaje..."
+        />
+        <button className="btn post" onClick={create}>POST - Crear</button>
+      </div>
 
-      <div className="ticks"></div>
+      <div className="messages">
+        {messages.map((msg) => (
+          <div key={msg.id} className="message">
+            {editId === msg.id ? (
+              <div className="edit-form">
+                <input
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                />
+                <button className="btn put" onClick={() => update(msg.id)}>PUT</button>
+                <button className="btn patch" onClick={() => patch(msg.id)}>PATCH</button>
+                <button className="btn cancel" onClick={() => setEditId(null)}>Cancelar</button>
+              </div>
+            ) : (
+              <>
+                <span className="msg-text">{msg.text}</span>
+                <span className="msg-id">ID: {msg.id}</span>
+                <div className="actions">
+                  <button className="btn edit" onClick={() => startEdit(msg)}>Editar</button>
+                  <button className="btn delete" onClick={() => remove(msg.id)}>DELETE</button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <p className="footer">
+        Métodos CORS permitidos: GET, POST, PUT, PATCH, DELETE
+      </p>
+    </div>
   )
 }
 
