@@ -1,19 +1,5 @@
 # Tarea - Frontend
-
 Aplicación web fullstack con **Vite + React** (frontend) y **Express** (backend) que demuestra el manejo de **CORS** y operaciones CRUD.
-
-## Estructura del proyecto
-
-```
-/
-├── Frontend/          → Vite + React (puerto 5173)
-│   ├── src/App.tsx    → Interfaz CRUD
-│   └── vite.config.ts → Proxy /api → backend
-└── backend/           → Express + CORS (puerto 5000)
-    └── src/server.ts  → API con GET, POST, PUT, PATCH, DELETE
-```
-
-## Ejecutar
 
 ### Backend
 ```bash
@@ -21,7 +7,6 @@ cd backend
 npm install
 npm run dev
 ```
-
 ### Frontend (otra terminal)
 ```bash
 cd Frontend
@@ -41,13 +26,14 @@ Abrir `http://localhost:5173`
 | PATCH | /api/messages/:id | Actualizar mensaje |
 | DELETE | /api/messages/:id | Eliminar mensaje |
 
-## CORS
-
-Configurado en `backend/src/server.ts`:
-```ts
+Manejo de CORS
+// Definición de las opciones con el tipo estricto de la librería
 const corsOptions: cors.CorsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'https://tu-app-de-produccion.com'],
-  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+  origin: ['http://localhost:3000&#39;, 'https://tu-app-de-produccion.com&#39;], // Dominios permitidos
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'], // Métodos HTTP permitidos
 };
+
+// Aplicar las opciones al middleware
 app.use(cors(corsOptions));
-```
+Fecha de entrega: 31/05/2026 11:59 PM
+En grupos, se comparte enlace a GitHub (Verificar que se dieron los permisos necesarios)
